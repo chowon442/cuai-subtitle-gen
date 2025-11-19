@@ -1,10 +1,25 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from app.routers import task
+from app.routers import task, llm
 
 from fastapi.exceptions import RequestValidationError
 from app.common.error import validation_exception_handler
+from app.common.db import ping_database
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    ping_database()
+    print("✅ Database connection verified")
+    yield
+    # Shutdown
+    print("👋 Shutting down")
+
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(llm.router)
 app.include_router(task.router)
 
 @app.exception_handler(RequestValidationError)

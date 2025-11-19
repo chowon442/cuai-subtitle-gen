@@ -1,5 +1,6 @@
 from enum import Enum
 
-class TaskStatus(Enum):
-    RUNNING = "running"
-    DONE = "done"
+
+class TaskStatus(str, Enum):
+    RUNNING = "RUNNING"
+    DONE = "DONE"
