@@ -10,19 +10,15 @@ from typing import List, Dict
 from collections import Counter, defaultdict
 from tabulate import tabulate
 
-class Hypothesis(BaseModel):
-    text: str
-    score: float
+class SubtitleSegment(BaseModel):
+    segment_id: int
+    start: float
+    end: float
+    n_best: List[str] = Field(default_factory=list)
 
-class NBestItem(BaseModel):
-    id: int
-    n_best: List[Hypothesis] = Field(..., alias="n-best")
-
-    class Config:
-        populate_by_name = True
 
 # 리스트를 직접 받도록 변경
-SubtitleRequest = List[NBestItem]
+SubtitleRequest = List[SubtitleSegment]
 
 
 router = APIRouter(
@@ -49,11 +45,26 @@ async def generate_text(prompt: str):
 @router.post("/generate2",
              summary="LLM 기반 자막 후처리 생성")
 async def generate_subtitle(body: SubtitleRequest):
-    # body는 이미 리스트이므로 직접 처리
-    test_json = [item.model_dump() for item in body]
-    # n_best를 n-best로 변환 (기존 코드와 호환)
-    for item in test_json:
-        item["n-best"] = item.pop("n_best")
+    # 새로운 세그먼트 기반 입력을 기존 파이프라인에서 사용하는 형태로 변환
+    def convert_segments_to_nbest(segments: SubtitleRequest) -> List[Dict]:
+        converted = []
+        for segment in segments:
+            segment_dict = segment.model_dump()
+            segment_id = segment_dict["segment_id"]
+            n_best_texts = segment_dict.pop("n_best", []) or [""]
+
+            n_best_with_scores = []
+            for idx, text in enumerate(n_best_texts):
+                synthetic_score = -float(idx)  # 순위를 보존하기 위한 가짜 점수
+                n_best_with_scores.append({"text": text, "score": synthetic_score})
+
+            segment_dict["id"] = segment_id
+            segment_dict["n-best"] = n_best_with_scores
+            converted.append(segment_dict)
+
+        return converted
+
+    test_json = convert_segments_to_nbest(body)
 
     llm_model_name = "moonshotai/kimi-k2-thinking"
 
@@ -649,8 +660,16 @@ async def generate_subtitle(body: SubtitleRequest):
 
         results = []
         for item in batch_data:
+            segment_id = item.get("segment_id", item["id"])
             results.append(
-                {"id": item["id"], "original_nbest": item["n-best"], "results": {}}
+                {
+                    "id": item["id"],
+                    "segment_id": segment_id,
+                    "start": item.get("start"),
+                    "end": item.get("end"),
+                    "original_nbest": item["n-best"],
+                    "results": {},
+                }
             )
 
         # 각 방법마다 배치 전체를 한번에 처리
@@ -722,7 +741,7 @@ async def generate_subtitle(body: SubtitleRequest):
         summary_table = []
         for result in all_results:
             row = [
-                result["id"],
+                result.get("segment_id", result["id"]),
                 format_text_for_table(result["original_nbest"][0]["text"]),
             ]
 
@@ -732,7 +751,7 @@ async def generate_subtitle(body: SubtitleRequest):
 
             summary_table.append(row)
 
-        headers = ["ID", "원본 1-best"]
+        headers = ["Segment ID", "원본 1-best"]
         if all_results and "method1" in all_results[0]["results"]:
             headers.append("방법1")
         if all_results and "method2" in all_results[0]["results"]:

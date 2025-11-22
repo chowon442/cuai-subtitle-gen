@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from app.routers import task, llm
+from app.routers import task, llm, whisper
 
 from fastapi.exceptions import RequestValidationError
 from app.common.error import validation_exception_handler
@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(llm.router)
 app.include_router(task.router)
+app.include_router(whisper.router)
 
 @app.exception_handler(RequestValidationError)
 async def handle_validation_error(request, exc):

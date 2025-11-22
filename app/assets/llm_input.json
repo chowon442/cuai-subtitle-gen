@@ -1,0 +1,42 @@
+[
+  {
+    "segment_id": 0,
+    "start": 5.575,
+    "end": 7.136,
+    "n_best": [
+      "Interdisciplinarity."
+    ]
+  },
+  {
+    "segment_id": 1,
+    "start": 8.157,
+    "end": 15.281,
+    "n_best": [
+      "Is there room for interdisciplinarity in undergraduate engineering education's futures?"
+    ]
+  },
+  {
+    "segment_id": 2,
+    "start": 15.702,
+    "end": 20.425,
+    "n_best": [
+      "Today, let's observe the short agenda as shown on this slide."
+    ]
+  },
+  {
+    "segment_id": 3,
+    "start": 21.025,
+    "end": 29.11,
+    "n_best": [
+      "First, let's speak about our possible futures and how those are shaped by many agents of change."
+    ]
+  },
+  {
+    "segment_id": 4,
+    "start": 29.631,
+    "end": 29.951,
+    "n_best": [
+      "There are"
+    ]
+  }
+]

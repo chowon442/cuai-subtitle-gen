@@ -69,3 +69,4 @@ temp/
 uv.lock
 
 config.py
+*.wav

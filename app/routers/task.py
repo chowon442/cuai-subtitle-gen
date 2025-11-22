@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.common.db import get_db
-from ..common.enum import TaskStatus
+from app.common.enum import TaskStatus
 
 router = APIRouter(
     prefix="/task",
